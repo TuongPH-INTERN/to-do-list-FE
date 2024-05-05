@@ -18,16 +18,18 @@
         >
           <div class="col">
             <input
+            required
               class="form-control form-control-lg border-0 add-todo-input bg-transparent rounded"
               type="text"
               placeholder="Add new .."
+              v-model="task.task_name"
             />
           </div>
           <div class="col-auto m-0 px-2 d-flex align-items-center">
-            <input type="datetime-local" />
+            <input type="datetime-local" v-model="task.date"/>
           </div>
           <div class="col-auto px-0 mx-0 mr-2">
-            <button type="button" class="btn btn-primary">Add</button>
+            <button type="button" class="btn btn-primary" @click="addTaskClick()">Add</button>
           </div>
         </div>
       </div>
@@ -69,9 +71,9 @@
         </div>
 
     </div>
-    <table class="table table-striped text-center">
+    <table class="table text-center">
       <thead>
-        <tr>
+        <tr class="table-dark">
           <th scope="col" class="col-1">#</th>
           <th scope="col" class="col-5">Task</th>
           <th scope="col" class="col-2">Date</th>
@@ -79,53 +81,30 @@
           <th scope="col" class="col-3">Action</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
-          <th scope="row">1</th>
-          <td>Mark</td>
-          <td>Otto</td>
-          <td>Completed</td>
-          <td>
-  <button type="button" class="btn btn-outline-success btn-sm">
-          Complete
-        </button>
-        <button type="button" class="btn btn-outline-warning btn-sm">
-          Edit
-        </button>
-        <button type="button" class="btn btn-outline-danger btn-sm">
-          Delete
-        </button>
-    </td>
-        </tr>
-        <tr>
-          <th scope="row">2</th>
-          <td>Jacob</td>
-          <td>Thornton</td>
-          <td>Doing</td>
-          <td> <button type="button" class="btn btn-outline-success btn-sm">
-          Complete
-        </button>
-        <button type="button" class="btn btn-outline-warning btn-sm">
-          Edit
-        </button>
-        <button type="button" class="btn btn-outline-danger btn-sm">
-          Delete
-        </button></td>
-        </tr>
-        <tr>
-          <th scope="row">3</th>
-          <td>Larry</td>
-          <td>the Bird</td>
-          <td>Expired</td>
-          <td> <button type="button" class="btn btn-outline-success btn-sm">
-          Complete
-        </button>
-        <button type="button" class="btn btn-outline-warning btn-sm">
-          Edit
-        </button>
-        <button type="button" class="btn btn-outline-danger btn-sm">
-          Delete
-        </button></td>
+      <tbody v-for="(todo, index) in todos" :key="todo.id">
+          <tr :class="{
+            'table-secondary': todo.status === 3,
+            'table-info': todo.status === 2
+          }">
+            <th scope="row">{{index+1}}</th>
+            <td>{{todo.task_name}}</td>
+            <td>{{todo.date}}</td>
+            <td v-if="todo.status === 1">Doing</td>
+            <td v-else-if="todo.status === 2">Completed</td>
+            <td v-else-if="todo.status === 3">Expired</td>
+            <td>
+              <button v-if="todo.status !== 2" type="button" class="btn btn-success btn-sm" @click="completeTask(todo.id)">
+                Complete
+              </button>
+          <router-link :to="{name:'editTask', params:{id:todo.id}}" custom v-slot="{ navigate }">
+  <button type="button" class="btn btn-warning btn-sm" @click="navigate">
+    Edit
+  </button>
+</router-link>
+          <button type="button" class="btn btn-danger btn-sm" @click="deleteTaskClick(todo.id)">
+            Delete
+          </button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -133,25 +112,95 @@
 </template>
 
 <script>
-import axios from 'axios'
+import * as taskAPI from '../utils/task'
+import moment from 'moment'
 
 export default {
   name: 'Todos',
   data () {
     return {
       todos: [],
-      textContent: '',
-      code: 2
+      task: {
+        task_name: '',
+        date: ''
+      }
     }
   },
   created () {
-    axios.get('http://todolist.test/api/task')
-      .then(res => {
-        console.log(res)
-      })
-      .catch(error => {
+    this.getTask()
+  },
+  methods: {
+    async getTask () {
+      try {
+        const response = await taskAPI.get()
+        if (response.data.tasks.data) {
+          this.todos = response.data.tasks.data
+        }
+      } catch (error) {
         console.error('Error:', error)
-      })
+      }
+    },
+
+    async addTask (data) {
+      try {
+        const response = await taskAPI.post(data)
+        if (response.status === 200) {
+          this.$toasted.success('Task added successfully')
+          this.getTask()
+        }
+      } catch (error) {
+        console.error('Error:', error)
+      }
+    },
+
+    async updateTask (id, data) {
+      try {
+        const response = await taskAPI.put(id, data)
+        if (response.status === 200) {
+          this.$toasted.success('Task updated successfully')
+          this.getTask()
+        }
+      } catch (error) {
+        console.error('Error:', error)
+      }
+    },
+
+    async deleteTask (id) {
+      try {
+        const response = await taskAPI.destroy(id)
+        if (response.status === 200) {
+          this.$toasted.success('Task deleted successfully')
+          this.getTask()
+        }
+      } catch (error) {
+        console.error('Error:', error)
+      }
+    },
+
+    addTaskClick: function () {
+      if (this.task.task_name.trim() === '' || this.task.date === '') {
+        this.$toasted.error('Please enter both name task and date')
+        return
+      }
+      this.task.date = moment(this.task.date).format('YYYY-MM-DD HH:mm:ss')
+      this.addTask(this.task)
+    },
+
+    completeTask: function (id) {
+      if (confirm('Are you sure you want to complete this item?')) {
+        let param = {
+          'status': '2',
+          'isChangeStatus': true
+        }
+        this.updateTask(id, param)
+      }
+    },
+
+    deleteTaskClick: function (id) {
+      if (confirm('Are you sure you want to delete this item?')) {
+        this.deleteTask(id)
+      }
+    }
   }
 }
 </script>
