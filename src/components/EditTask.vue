@@ -45,7 +45,7 @@ export default {
           this.task = response.data.task
         }
       } catch (error) {
-        console.error('Error:', error)
+        this.$toasted.error('An error. Please try again')
       }
     },
     async updateTask (id, data) {
@@ -56,7 +56,7 @@ export default {
           this.backHome()
         }
       } catch (error) {
-        console.error('Error:', error)
+        this.$toasted.error('An error. Please try again')
       }
     },
     updateTaskClick: function () {

@@ -150,7 +150,7 @@ export default {
           this.count_task = response.data.tasks.total_tasks
         }
       } catch (error) {
-        console.error('Error:', error)
+        this.$toasted.error('An error. Please try again')
       }
     },
 
@@ -166,7 +166,7 @@ export default {
           this.getTask()
         }
       } catch (error) {
-        console.error('Error:', error)
+        this.$toasted.error('An error. Please try again')
       }
     },
 
@@ -178,7 +178,7 @@ export default {
           this.getTask()
         }
       } catch (error) {
-        console.error('Error:', error)
+        this.$toasted.error('An error. Please try again')
       }
     },
 
@@ -190,7 +190,7 @@ export default {
           this.getTask()
         }
       } catch (error) {
-        console.error('Error:', error)
+        this.$toasted.error('An error. Please try again')
       }
     },
 
