@@ -1,7 +1,8 @@
 import {HTTP} from './axios'
 
-const get = () => {
-  return HTTP.get('/task')
+const get = (data) => {
+  console.log(data)
+  return HTTP.get('/task', { params: data })
 }
 
 const post = (data) => {

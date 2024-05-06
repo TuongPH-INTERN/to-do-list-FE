@@ -37,39 +37,43 @@
     <div class="p-2 mx-4 border-black-25 border-bottom"></div>
     <!-- View options section -->
     <div class="row m-1 p-3 px-5 justify-content-end">
-       <div class="col-6 d-flex align-items-center mx-5">
+       <div class="col-4 d-flex align-items-center mx-5">
           <label class="text-secondary my-2 pr-2 view-opt-label mx-3">Search:</label>
-          <input type="text" class="col-9 form-control" placeholder="Search by key word">
+          <input type="text" class="col-9 form-control" placeholder="Search by key word" v-model="params_get.key_word" @keyup="searchTask">
         </div>
         <div class="col-auto d-flex align-items-center mx-5">
           <label class="text-secondary my-2 pr-2 view-opt-label">Filter</label>
-          <select class="custom-select custom-select-sm btn my-2">
-            <option value="all" selected>All</option>
-            <option value="completed">Completed</option>
-            <option value="active">Active</option>
-            <option value="has-due-date">Has due date</option>
+          <select class="custom-select custom-select-sm btn my-2" v-model="params_get.filter" @change="getTask">
+            <option value="" selected>All</option>
+            <option value="2">Completed</option>
+            <option value="1">Active</option>
+            <option value="3">Has due date</option>
           </select>
         </div>
         <div class="col-auto d-flex align-items-center px-1 pr-3">
           <label class="text-secondary my-2 pr-2 view-opt-label">Sort</label>
-          <select class="custom-select custom-select-sm btn my-2">
-            <option value="added-date-asc" selected>Added date</option>
-            <option value="due-date-desc">Due date</option>
+          <select class="custom-select custom-select-sm btn my-2" v-model="params_get.sort" @change="getTask">
+            <option value="asc" selected>ascending </option>
+            <option value="desc">descending </option>
           </select>
-          <i
-            class="fa fa fa-sort-amount-asc text-info btn mx-0 px-0 pl-1"
-            data-toggle="tooltip"
-            data-placement="bottom"
-            title="Ascending"
-          ></i>
-          <i
-            class="fa fa fa-sort-amount-desc text-info btn mx-0 px-0 pl-1 d-none"
-            data-toggle="tooltip"
-            data-placement="bottom"
-            title="Descending"
-          ></i>
         </div>
 
+    </div>
+    <div>
+      <div class="col-auto d-flex align-items-center mb-1">
+        <span class="btn btn-primary btn-sm">
+            Total: <span class="badge badge-light">{{count_task.total_tasks}}</span>
+          </span>
+          <span class="btn btn-success btn-sm mx-2">
+            Completed:<span class="badge badge-light">{{count_task.total_completed}}</span>
+          </span>
+          <span class="btn btn-warning btn-sm text-light">
+            Doing:<span class="badge badge-light">{{count_task.total_doing}}</span>
+          </span>
+          <span class="btn btn-danger btn-sm mx-2">
+            Expried:<span class="badge badge-light">{{count_task.total_expired}}</span>
+          </span>
+        </div>
     </div>
     <table class="table text-center">
       <thead>
@@ -114,6 +118,7 @@
 <script>
 import * as taskAPI from '../utils/task'
 import moment from 'moment'
+import debounce from '../utils/debounce'
 
 export default {
   name: 'Todos',
@@ -123,6 +128,13 @@ export default {
       task: {
         task_name: '',
         date: ''
+      },
+      count_task: {
+      },
+      params_get: {
+        key_word: '',
+        sort: 'desc',
+        filter: ''
       }
     }
   },
@@ -132,14 +144,19 @@ export default {
   methods: {
     async getTask () {
       try {
-        const response = await taskAPI.get()
-        if (response.data.tasks.data) {
-          this.todos = response.data.tasks.data
+        const response = await taskAPI.get(this.params_get)
+        if (response.data.tasks) {
+          this.todos = response.data.tasks.tasks.data
+          this.count_task = response.data.tasks.total_tasks
         }
       } catch (error) {
         console.error('Error:', error)
       }
     },
+
+    searchTask: debounce(async function () {
+      await this.getTask()
+    }, 700),
 
     async addTask (data) {
       try {
