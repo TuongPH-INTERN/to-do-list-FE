@@ -3,8 +3,19 @@
 import Vue from 'vue'
 import App from './App'
 import router from './router'
+import route from 'vue-router'
+import BootstrapVue from 'bootstrap-vue'
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue/dist/bootstrap-vue.css'
+import Toasted from 'vue-toasted'
 
+Vue.use(route)
+Vue.use(BootstrapVue)
 Vue.config.productionTip = false
+Vue.use(Toasted, {
+  duration: 3000,
+  theme: 'bubble'
+})
 
 /* eslint-disable no-new */
 new Vue({
